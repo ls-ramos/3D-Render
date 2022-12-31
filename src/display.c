@@ -54,6 +54,12 @@ void clear_color_buffer(uint32_t color) {
   }
 }
 
+void draw_pixel(int x, int y, uint32_t color){
+  if(x < window_width && y < window_height){
+    color_buffer[(window_width * y)+x] = color;
+  }
+}
+
 void draw_grid(uint32_t lineColor, int gridSize) {
   int xJump = 1;
   for (int y = 0; y < window_height; y++) {

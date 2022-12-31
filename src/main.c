@@ -7,6 +7,9 @@ void process_input(void);
 void update(void);
 void render(void);
 
+const int N_POINTS = 9*9*9;
+vec3_t cube_points[N_POINTS];
+
 int main(void) {
   is_running = setup();
 
@@ -41,6 +44,17 @@ bool setup(void) {
     fprintf(stderr, "Error creating SDL color buffer texture\n");
     return false;
   }
+  
+  int count = 0;
+  for(float x=-1; x<= -1; x+= 0.25){
+   for(float y=-1; y<= -1; y+= 0.25){
+      for(float z=-1; z<= -1; z+= 0.25){
+        vec3_t new_point = {x, y, z};
+        cube_points[count] = new_point;
+        count++;
+      }
+    } 
+  }
 
   return true;
 }
@@ -71,7 +85,7 @@ void render(void) {
   SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
   SDL_RenderClear(renderer);
 
-  // draw_grid(0xFFFFFFFF, 25);
+  draw_grid(0xFFFFFFFF, 25);
   draw_rectangle(600, 20, 100, 200, 0xFF0000FF);
 
   render_color_buffer();

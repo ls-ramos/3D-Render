@@ -6,6 +6,8 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#include "vector.h"
+
 extern SDL_Window *window;
 extern SDL_Renderer *renderer;
 extern SDL_Texture *color_buffer_texture;
@@ -20,6 +22,7 @@ void clean_sdl();
 void render_color_buffer(void);
 void clear_color_buffer(uint32_t color);
 
+void draw_pixel(int x, int y, uint32_t color);
 void draw_grid(uint32_t lineColor, int gridSize);
 void draw_rectangle(int xPos, int yPos, int width, int height, uint32_t color);
 #endif
