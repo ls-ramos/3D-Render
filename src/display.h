@@ -8,6 +8,9 @@
 
 #include "vector.h"
 
+#define FRAME_RATE 30
+#define FRAME_TARGET_TIME 1000 / FRAME_RATE
+
 extern SDL_Window *window;
 extern SDL_Renderer *renderer;
 extern SDL_Texture *color_buffer_texture;
