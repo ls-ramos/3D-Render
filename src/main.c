@@ -1,5 +1,7 @@
 #include "display.h"
+#define N_POINTS 9 * 9 * 9
 
+float fac_scale = 640;
 bool is_running = false;
 
 bool setup(void);
@@ -7,8 +9,11 @@ void process_input(void);
 void update(void);
 void render(void);
 
-const int N_POINTS = 9*9*9;
 vec3_t cube_points[N_POINTS];
+vec3_t camera = {.x = 0, .y = 0, .z = -5};
+vec3_t cube_rotation = {.x = 0, .y = 0, .z = 0};
+
+vec2_t projected_cube_points[N_POINTS];
 
 int main(void) {
   is_running = setup();
@@ -44,19 +49,26 @@ bool setup(void) {
     fprintf(stderr, "Error creating SDL color buffer texture\n");
     return false;
   }
-  
+
   int count = 0;
-  for(float x=-1; x<= -1; x+= 0.25){
-   for(float y=-1; y<= -1; y+= 0.25){
-      for(float z=-1; z<= -1; z+= 0.25){
+  for (float x = -1; x <= 1; x += 0.25) {
+    for (float y = -1; y <= 1; y += 0.25) {
+      for (float z = -1; z <= 1; z += 0.25) {
         vec3_t new_point = {x, y, z};
         cube_points[count] = new_point;
         count++;
       }
-    } 
+    }
   }
 
   return true;
+}
+
+vec2_t project(vec3_t vector) {
+  vec2_t projected_vector = {.x = vector.x / vector.z,
+                             .y = vector.y / vector.z};
+
+  return projected_vector;
 }
 
 void process_input(void) {
@@ -78,15 +90,30 @@ void process_input(void) {
 }
 
 void update(void) {
-  // TODO: implement
+  cube_rotation.x += 0.01;
+  cube_rotation.y += 0.01;
+  cube_rotation.z += 0.01;
+
+  for (int i = 0; i < N_POINTS; i++) {
+    vec3_t transformed_vector =
+        rotate_vector_x(cube_points[i], cube_rotation.x);
+    transformed_vector = rotate_vector_y(transformed_vector, cube_rotation.y);
+    transformed_vector = rotate_vector_z(transformed_vector, cube_rotation.z);
+
+    transformed_vector.z -= camera.z;
+
+    projected_cube_points[i] = project(transformed_vector);
+  }
 }
 
 void render(void) {
-  SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
-  SDL_RenderClear(renderer);
+  for (int i = 0; i < N_POINTS; i++) {
+    vec2_t point = projected_cube_points[i];
 
-  draw_grid(0xFFFFFFFF, 25);
-  draw_rectangle(600, 20, 100, 200, 0xFF0000FF);
+    draw_rectangle((point.x * fac_scale) + (window_width / 2),
+                   (point.y * fac_scale) + (window_height / 2), 4, 4,
+                   0xFFFFFF00);
+  }
 
   render_color_buffer();
   clear_color_buffer(0xFF000000);

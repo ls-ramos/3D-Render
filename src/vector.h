@@ -12,4 +12,8 @@ typedef struct {
   float z;
 } vec3_t;
 
+vec3_t rotate_vector_y(vec3_t vector, float angle);
+vec3_t rotate_vector_x(vec3_t vector, float angle);
+vec3_t rotate_vector_z(vec3_t vector, float angle);
+
 #endif
