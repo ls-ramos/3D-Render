@@ -1,3 +1,4 @@
+#include "array.h"
 #include "display.h"
 #include "mesh.h"
 #include "triangle.h"
@@ -11,11 +12,11 @@ bool setup(void);
 void process_input(void);
 void update(void);
 void render(void);
+void cleanup_resources(void);
 
 vec3_t camera = {.x = 0, .y = 0, .z = -5};
 
-vec3_t cube_rotation = {.x = 0, .y = 0, .z = 0};
-triangle_t triangles_to_render[N_MESH_FACES];
+triangle_t* triangles_to_render = NULL;
 
 int main(void) {
   is_running = setup();
@@ -27,6 +28,7 @@ int main(void) {
   }
 
   clean_sdl();
+  cleanup_resources();
   return 0;
 }
 
@@ -37,7 +39,7 @@ bool setup(void) {
   }
 
   color_buffer =
-      (uint32_t *)malloc((window_width * window_height) * sizeof(uint32_t));
+      (uint32_t*)malloc((window_width * window_height) * sizeof(uint32_t));
 
   if (!color_buffer) {
     fprintf(stderr, "Error allocating color buffer\n");
@@ -51,6 +53,9 @@ bool setup(void) {
     fprintf(stderr, "Error creating SDL color buffer texture\n");
     return false;
   }
+
+  load_obj_file("assets/f22.obj");
+  // load_cube_mesh();
 
   return true;
 }
@@ -89,16 +94,19 @@ void update(void) {
 
   previous_time_frame = SDL_GetTicks();
 
-  cube_rotation.x += 0.02;
-  cube_rotation.y += 0.02;
-  cube_rotation.z += 0.02;
+  triangles_to_render = NULL;
 
-  for (int i = 0; i < N_MESH_FACES; i++) {
-    face_t mesh_face = mesh_faces[i];
+  mesh.rotation.x += 0.02;
+  mesh.rotation.y += 0.02;
+  mesh.rotation.z += 0.02;
+
+  int num_faces = array_length(mesh.faces);
+  for (int i = 0; i < num_faces; i++) {
+    face_t mesh_face = mesh.faces[i];
     vec3_t vertices[3];
-    vertices[0] = mesh_vertices[mesh_face.a - 1];
-    vertices[1] = mesh_vertices[mesh_face.b - 1];
-    vertices[2] = mesh_vertices[mesh_face.c - 1];
+    vertices[0] = mesh.vertices[mesh_face.a - 1];
+    vertices[1] = mesh.vertices[mesh_face.b - 1];
+    vertices[2] = mesh.vertices[mesh_face.c - 1];
 
     triangle_t transformed_triangle;
 
@@ -106,11 +114,11 @@ void update(void) {
       vec3_t transformed_vertice = vertices[j];
 
       transformed_vertice =
-          rotate_vector_x(transformed_vertice, cube_rotation.x);
+          rotate_vector_x(transformed_vertice, mesh.rotation.x);
       transformed_vertice =
-          rotate_vector_y(transformed_vertice, cube_rotation.y);
+          rotate_vector_y(transformed_vertice, mesh.rotation.y);
       transformed_vertice =
-          rotate_vector_z(transformed_vertice, cube_rotation.z);
+          rotate_vector_z(transformed_vertice, mesh.rotation.z);
 
       transformed_vertice.z -= camera.z;
       vec2_t projected_vertice = project(transformed_vertice);
@@ -123,21 +131,22 @@ void update(void) {
       transformed_triangle.points[j] = projected_vertice;
     }
 
-    triangles_to_render[i] = transformed_triangle;
+    array_push(triangles_to_render, transformed_triangle);
   }
 }
 
+void cleanup_resources(void) {
+  // TODO: clean color buffer here
+  array_free(mesh.vertices);
+  array_free(mesh.faces);
+}
+
 void render(void) {
-  for (int i = 0; i < N_MESH_FACES; i++) {
+  int num_triangles = array_length(triangles_to_render);
+  for (int i = 0; i < num_triangles; i++) {
     triangle_t triangle_to_render = triangles_to_render[i];
     uint32_t triangle_color = 0xFF00FF00;
 
-    draw_rectangle(triangle_to_render.points[0].x,
-                   triangle_to_render.points[0].y, 4, 4, triangle_color);
-    draw_rectangle(triangle_to_render.points[1].x,
-                   triangle_to_render.points[1].y, 4, 4, triangle_color);
-    draw_rectangle(triangle_to_render.points[2].x,
-                   triangle_to_render.points[2].y, 4, 4, triangle_color);
     draw_triangle(
         triangle_to_render.points[0].x, triangle_to_render.points[0].y,
         triangle_to_render.points[1].x, triangle_to_render.points[1].y,
@@ -145,6 +154,7 @@ void render(void) {
         triangle_color);
   }
 
+  array_free(triangles_to_render);
   render_color_buffer();
   clear_color_buffer(0xFF000000);
 
