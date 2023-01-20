@@ -2,6 +2,7 @@
 #include "display.h"
 #include "mesh.h"
 #include "triangle.h"
+#include "vector.h"
 
 float fac_scale = 640;
 bool is_running = false;
@@ -54,7 +55,7 @@ bool setup(void) {
     return false;
   }
 
-  load_obj_file("assets/f22.obj");
+  load_obj_file("assets/cube.obj");
   // load_cube_mesh();
 
   return true;
@@ -108,8 +109,9 @@ void update(void) {
     vertices[1] = mesh.vertices[mesh_face.b - 1];
     vertices[2] = mesh.vertices[mesh_face.c - 1];
 
-    triangle_t transformed_triangle;
+    vec3_t transformed_vertices[3];
 
+    // Rotating and sending away from the camera
     for (int j = 0; j < 3; j++) {
       vec3_t transformed_vertice = vertices[j];
 
@@ -121,7 +123,33 @@ void update(void) {
           rotate_vector_z(transformed_vertice, mesh.rotation.z);
 
       transformed_vertice.z -= camera.z;
-      vec2_t projected_vertice = project(transformed_vertice);
+
+      transformed_vertices[j] = transformed_vertice;
+    }
+
+    vec3_t vector_ab =
+        sub_vec3(transformed_vertices[1], transformed_vertices[0]);
+    vec3_t vector_ac =
+        sub_vec3(transformed_vertices[2], transformed_vertices[0]);
+    normalize_vec3(&vector_ab);
+    normalize_vec3(&vector_ac);
+
+    vec3_t normal = vet_prod_vec3(vector_ab, vector_ac);
+    normalize_vec3(&normal);
+
+    vec3_t camera_ray = sub_vec3(camera, transformed_vertices[0]);
+
+    float normal_camera = dot_prod_vec3(normal, camera_ray);
+
+    if (normal_camera < 0) {
+      continue;
+    }
+
+    triangle_t transformed_triangle;
+
+    // Projecting, scaling, translating
+    for (int j = 0; j < 3; j++) {
+      vec2_t projected_vertice = project(transformed_vertices[j]);
 
       projected_vertice.x =
           (projected_vertice.x * fac_scale) + (window_width / 2);
