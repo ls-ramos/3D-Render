@@ -3,11 +3,11 @@
 #include <math.h>
 
 vec3_t add_vec3(vec3_t v1, vec3_t v2) {
-  vec3_t result = {.x = v1.x + v2.x, .y = v1.y + v2.y, .z = v1.z + v1.z};
+  vec3_t result = {.x = v1.x + v2.x, .y = v1.y + v2.y, .z = v1.z + v2.z};
   return result;
 }
 vec3_t sub_vec3(vec3_t v1, vec3_t v2) {
-  vec3_t result = {.x = v1.x - v2.x, .y = v1.y - v2.y, .z = v1.z - v1.z};
+  vec3_t result = {.x = v1.x - v2.x, .y = v1.y - v2.y, .z = v1.z - v2.z};
   return result;
 }
 vec3_t vet_prod_vec3(vec3_t v1, vec3_t v2) {
