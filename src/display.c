@@ -94,6 +94,95 @@ void draw_line(int x0, int y0, int x1, int y1, uint32_t color) {
   }
 }
 
+/**
+ *        (x0,y0)
+ *        /     \
+ *       /       \
+ *      /         \
+ *   (x1,y1)-----(x2,y2)
+ */
+void draw_top_triangle(int x0, int y0, int x1, int y1, int x2, int y2,
+                       uint32_t color) {
+  float inc0 = (x1 - x0) / (float)(y1 - y0);
+  float inc1 = (x2 - x0) / (float)(y2 - y0);
+
+  float init = x0;
+  float end = x0;
+
+  for (int i = y0; i <= y1; i++) {
+    draw_line(round(init), i, round(end), i, color);
+    init += inc0;
+    end += inc1;
+  }
+}
+
+/**
+ *  (x0,y0)----(x1,y1)
+ *      \         /
+ *       \       /
+ *        (x2,y2)
+ */
+void draw_bottom_triangle(int x0, int y0, int x1, int y1, int x2, int y2,
+                          uint32_t color) {
+  float inc0 = (x2 - x0) / (float)(y2 - y0);
+  float inc1 = (x2 - x1) / (float)(y2 - y1);
+
+  float init = x2;
+  float end = x2;
+
+  for (int i = y2; i >= y0; i--) {
+    draw_line(round(init), i, round(end), i, color);
+    init -= inc0;
+    end -= inc1;
+  }
+}
+
+void swap(int *x, int *y) {
+  int tmp = *x;
+  *x = *y;
+  *y = tmp;
+}
+
+/**
+ *        (x0,y0)
+ *        /     \
+ *       /       \
+ *      /         \
+ *   (x1,y1)    (mx,my)
+ *                  \
+ *                   \
+ *                 (x2,y2)
+ */
+void draw_filled_triangle(int x0, int y0, int x1, int y1, int x2, int y2,
+                          uint32_t color) {
+  if (y1 < y0) {
+    swap(&x0, &x1);
+    swap(&y0, &y1);
+  }
+
+  if (y2 < y1) {
+    swap(&x2, &x1);
+    swap(&y2, &y1);
+  }
+
+  if (y1 < y0) {
+    swap(&x0, &x1);
+    swap(&y0, &y1);
+  }
+
+  if (y1 == y2) {
+    draw_top_triangle(x0, y0, x1, y1, x2, y2, color);
+  } else if (y1 == y0) {
+    draw_bottom_triangle(x0, y0, x1, y1, x2, y2, color);
+  } else {
+    int my = y1;
+    int mx = (((y1 - y0) * (x2 - x0)) / (y2 - y0)) + x0;
+
+    draw_top_triangle(x0, y0, x1, y1, mx, my, color);
+    draw_bottom_triangle(x1, y1, mx, my, x2, y2, color);
+  }
+}
+
 void draw_triangle(int x0, int y0, int x1, int y1, int x2, int y2,
                    uint32_t color) {
   draw_line(x0, y0, x1, y1, color);
