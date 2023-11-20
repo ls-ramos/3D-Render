@@ -23,6 +23,8 @@ void cleanup_resources(void);
 
 vec3_t camera = {.x = 0, .y = 0, .z = 0};
 
+vec3_t light = {.x = 1, .y = 1, .z = 1};
+
 triangle_t* triangles_to_render = NULL;
 
 int main(void) {
@@ -188,6 +190,9 @@ void update(void) {
     vec3_t camera_ray = sub_vec3(camera, transformed_vertices[0]);
 
     float normal_camera = dot_prod_vec3(normal, camera_ray);
+    float light_factor = dot_prod_vec3(normal, light);
+
+    // TODO : Adjust color based on light factor
 
     if (normal_camera < 0 && cull_on) {
       continue;
