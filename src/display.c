@@ -9,7 +9,7 @@ int window_height = 600;
 
 enum cull_method cull_method;
 enum render_method render_method;
- 
+
 bool initialize_window(void) {
     if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
         fprintf(stderr, "Error initializing SDL.\n");

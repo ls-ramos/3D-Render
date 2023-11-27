@@ -7,6 +7,7 @@
 #include "vector.h"
 #include "matrix.h"
 #include "mesh.h"
+#include "light.h"
 #include <math.h>
 #ifndef  M_PI
 #define  M_PI  3.1415926535897932384626433
@@ -31,7 +32,7 @@ mat4_t proj_matrix;
 ///////////////////////////////////////////////////////////////////////////////
 void setup(void) {
     // Initialize render mode and triangle culling method
-    render_method = RENDER_WIRE;
+    render_method = RENDER_FILL_TRIANGLE;
     cull_method = CULL_BACKFACE;
 
     // Allocate the required memory in bytes to hold the color buffer
@@ -54,8 +55,8 @@ void setup(void) {
     proj_matrix = mat4_make_perspective(fov, aspect, znear, zfar);
 
     // Loads the vertex and face values for the mesh data structure
-    load_cube_mesh_data();
-    // load_obj_file_data("./assets/cube.obj");
+    // load_cube_mesh_data();
+    load_obj_file_data("./assets/f22.obj");
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -86,6 +87,7 @@ void process_input(void) {
             break;
     }
 }
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // Update function frame by frame with a fixed time step
@@ -150,28 +152,36 @@ void update(void) {
             transformed_vertices[j] = transformed_vertex;
         }
 
+
+        vec3_t vector_a = vec3_from_vec4(transformed_vertices[0]); /*   A   */
+        vec3_t vector_b = vec3_from_vec4(transformed_vertices[1]); /*  / \  */
+        vec3_t vector_c = vec3_from_vec4(transformed_vertices[2]); /* C---B */
+
+        // Get the vector subtraction of B-A and C-A
+        vec3_t vector_ab = vec3_sub(vector_b, vector_a);
+        vec3_t vector_ac = vec3_sub(vector_c, vector_a);
+        vec3_normalize(&vector_ab);
+        vec3_normalize(&vector_ac);
+
+        // Compute the face normal (using cross product to find perpendicular)
+        vec3_t normal = vec3_cross(vector_ab, vector_ac);
+        vec3_normalize(&normal);
+        
+        vec3_t normal_light = light.direction;
+        vec3_normalize(&normal_light);
+
+        // Change color based on the normal direction
+        float dot_normal_light = -vec3_dot(normal, normal_light);
+        mesh_face.color = change_color_intensity(mesh_face.color, dot_normal_light);
+        
         // Backface culling test to see if the current face should be projected
         if (cull_method == CULL_BACKFACE) {
-            vec3_t vector_a = vec3_from_vec4(transformed_vertices[0]); /*   A   */
-            vec3_t vector_b = vec3_from_vec4(transformed_vertices[1]); /*  / \  */
-            vec3_t vector_c = vec3_from_vec4(transformed_vertices[2]); /* C---B */
-
-            // Get the vector subtraction of B-A and C-A
-            vec3_t vector_ab = vec3_sub(vector_b, vector_a);
-            vec3_t vector_ac = vec3_sub(vector_c, vector_a);
-            vec3_normalize(&vector_ab);
-            vec3_normalize(&vector_ac);
-
-            // Compute the face normal (using cross product to find perpendicular)
-            vec3_t normal = vec3_cross(vector_ab, vector_ac);
-            vec3_normalize(&normal);
-
             // Find the vector between vertex A in the triangle and the camera origin
             vec3_t camera_ray = vec3_sub(camera_position, vector_a);
 
             // Calculate how aligned the camera ray is with the face normal (using dot product)
             float dot_normal_camera = vec3_dot(normal, camera_ray);
-
+            
             // Bypass the triangles that are looking away from the camera
             if (dot_normal_camera < 0) {
                 continue;
@@ -188,6 +198,9 @@ void update(void) {
             // Scale into the view
             projected_points[j].x *= (window_width / 2.0);
             projected_points[j].y *= (window_height / 2.0);
+
+            // Flip y value to account for inverted y in screen coordinates (in screen y grows downwards)
+            projected_points[j].y *= -1;
 
             // Translate the projected points to the middle of the screen
             projected_points[j].x += (window_width / 2.0);
