@@ -4,6 +4,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <SDL2/SDL.h>
+#include "triangle.h"
+#include "texture.h"
 
 #define FPS 60
 #define FRAME_TARGET_TIME (1000 / FPS)
@@ -17,7 +19,9 @@ extern enum render_method {
     RENDER_WIRE,
     RENDER_WIRE_VERTEX,
     RENDER_FILL_TRIANGLE,
-    RENDER_FILL_TRIANGLE_WIRE
+    RENDER_FILL_TRIANGLE_WIRE,
+    RENDER_TRIANGLE_TEXTURED,
+    RENDER_TRIANGLE_TEXTURED_WIRE
 } render_method;
 
 extern SDL_Window* window;
@@ -35,5 +39,6 @@ void draw_rect(int x, int y, int width, int height, uint32_t color);
 void render_color_buffer(void);
 void clear_color_buffer(uint32_t color);
 void destroy_window(void);
+void draw_textured_pixel(vec2_t P,vec2_t A,vec2_t B,vec2_t C,txt2_t uvA,txt2_t uvB,txt2_t uvC, uint32_t* texture);
 
 #endif

@@ -19,6 +19,7 @@ typedef struct {
     vec3_t rotation;    // rotation with x, y, and z values
     vec3_t scale;       // scale with x, y, and z values
     vec3_t translation; // translation with x, y, and z values
+    uint32_t* texture;   // texture
 } mesh_t;
 
 extern mesh_t mesh;
