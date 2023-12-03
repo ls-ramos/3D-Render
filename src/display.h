@@ -39,6 +39,6 @@ void draw_rect(int x, int y, int width, int height, uint32_t color);
 void render_color_buffer(void);
 void clear_color_buffer(uint32_t color);
 void destroy_window(void);
-void draw_textured_pixel(vec2_t P,vec2_t A,vec2_t B,vec2_t C,txt2_t uvA,txt2_t uvB,txt2_t uvC, uint32_t* texture);
+void draw_textured_pixel(vec2_t P,vec4_t A,vec4_t B,vec4_t C,txt2_t uvA,txt2_t uvB,txt2_t uvC, uint32_t* texture);
 
 #endif

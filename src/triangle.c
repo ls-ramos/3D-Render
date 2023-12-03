@@ -1,5 +1,6 @@
 #include "display.h"
 #include "triangle.h"
+#include "vector.h"
 
 void int_swap(int* a, int* b) {
     int tmp = *a;
@@ -139,7 +140,7 @@ void draw_triangle(int x0, int y0, int x1, int y1, int x2, int y2, uint32_t colo
     draw_line(x2, y2, x0, y0, color);
 }
 
-void draw_textured_triangle(int x0, int y0, float u0, float v0, int x1, int y1, float u1, float v1, int x2, int y2, float u2, float v2, uint32_t* texture){
+void draw_textured_triangle(int x0, int y0, float z0, float w0, float u0, float v0, int x1, int y1,  float z1, float w1, float u1, float v1, int x2, int y2,  float z2, float w2, float u2, float v2, uint32_t* texture) {
     
     if(y0 == y1 && y1 == y2) {
         return;
@@ -151,22 +152,35 @@ void draw_textured_triangle(int x0, int y0, float u0, float v0, int x1, int y1, 
         float_swap(&v0, &v1);
         int_swap(&x0, &x1);
         float_swap(&u0, &u1);
+
+        float_swap(&z0, &z1);
+        float_swap(&w0, &w1);
     }
     if (y1 > y2) {
         int_swap(&y1, &y2);
         float_swap(&v1, &v2);
         int_swap(&x1, &x2);
         float_swap(&u1, &u2);
+        float_swap(&z1, &z2);
+        float_swap(&w1, &w2);
     }
     if (y0 > y1) {
         int_swap(&y0, &y1);
         float_swap(&v0, &v1);
         int_swap(&x0, &x1);
         float_swap(&u0, &u1);
+        float_swap(&z0, &z1);
+        float_swap(&w0, &w1);
     }
-    vec2_t A = {x0, y0};
-    vec2_t B = {x1, y1};
-    vec2_t C = {x2, y2};
+
+    // Flip the y-axis when loading from obj file
+    v0 = 1 - v0;
+    v1 = 1 - v1;
+    v2 = 1 - v2;
+
+    vec4_t A = {x0, y0, z0, w0};
+    vec4_t B = {x1, y1, z1, w1};
+    vec4_t C = {x2, y2, z2, w2};
     txt2_t uvA = {u0, v0};
     txt2_t uvB = {u1, v1};
     txt2_t uvC = {u2, v2};

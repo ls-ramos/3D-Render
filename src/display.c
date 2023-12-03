@@ -113,7 +113,7 @@ void destroy_window(void) {
     SDL_Quit();
 }
 
-void draw_textured_pixel(vec2_t P,vec2_t A,vec2_t B,vec2_t C,txt2_t uvA,txt2_t uvB,txt2_t uvC, uint32_t* texture) {
+void draw_textured_pixel(vec2_t P,vec4_t A,vec4_t B,vec4_t C,txt2_t uvA,txt2_t uvB,txt2_t uvC, uint32_t* texture) {
     float denominador = (C.x-A.x)*(B.y-A.y) - (C.y-A.y)*(B.x-A.x);
     if (denominador == 0) {
         return;
@@ -125,8 +125,12 @@ void draw_textured_pixel(vec2_t P,vec2_t A,vec2_t B,vec2_t C,txt2_t uvA,txt2_t u
         return;
     }
 
-    float u = uvA.u * alpha + uvB.u * beta + uvC.u * gamma;
-    float v = uvA.v * alpha + uvB.v * beta + uvC.v * gamma;
+    float u = (uvA.u/A.w) * alpha + (uvB.u/B.w) * beta + (uvC.u/C.w) * gamma;
+    float v = (uvA.v/A.w) * alpha + (uvB.v/B.w) * beta + (uvC.v/C.w) * gamma;
+    float w = (1 / A.w) * alpha + (1 / B.w) * beta + (1 / C.w) * gamma;
+
+    u /= w;
+    v /= w;
 
     int texture_x = abs((int)(u * (texture_width -1)));
     int texture_y = abs((int)(v * (texture_height -1)));
