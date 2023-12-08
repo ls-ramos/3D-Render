@@ -3,6 +3,7 @@
 SDL_Window* window = NULL;
 SDL_Renderer* renderer = NULL;
 uint32_t* color_buffer = NULL;
+float* z_buffer = NULL;
 SDL_Texture* color_buffer_texture = NULL;
 int window_width = 800;
 int window_height = 600;
@@ -107,10 +108,42 @@ void clear_color_buffer(uint32_t color) {
     }
 }
 
+void clear_z_buffer(void) {
+    for (int y = 0; y < window_height; y++) {
+        for (int x = 0; x < window_width; x++) {
+            z_buffer[(window_width * y) + x] = 1.0f;
+        }
+    }
+}
+
 void destroy_window(void) {
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();
+}
+
+void draw_filled_pixel(vec2_t P,vec4_t A,vec4_t B,vec4_t C, uint32_t color) {
+    float denominador = (C.x-A.x)*(B.y-A.y) - (C.y-A.y)*(B.x-A.x);
+    if (denominador == 0) {
+        return;
+    }
+    float alpha = (((C.x - P.x)*(B.y-P.y)) - ((C.y - P.y)*(B.x-P.x))) / denominador;
+    float beta = (((A.x - P.x)*(C.y-P.y)) - ((A.y - P.y)*(C.x-P.x))) / denominador;
+    float gamma = 1.0f - alpha - beta;
+    if (alpha < 0 || beta < 0 || gamma < 0 || alpha > 1 || beta > 1 || gamma > 1) {
+        return;
+    }
+
+    float w = (1 / A.w) * alpha + (1 / B.w) * beta + (1 / C.w) * gamma;
+
+    // Adjust w so the closer the pixel is the smaller is the value of w
+    w = 1.0f - w;
+    int z_buffer_pos = (int) (window_width * P.y) + P.x;
+
+    if (w < z_buffer[z_buffer_pos]) {
+        z_buffer[z_buffer_pos] = w;
+        draw_pixel(P.x, P.y, color);
+    }   
 }
 
 void draw_textured_pixel(vec2_t P,vec4_t A,vec4_t B,vec4_t C,txt2_t uvA,txt2_t uvB,txt2_t uvC, uint32_t* texture) {
@@ -135,13 +168,17 @@ void draw_textured_pixel(vec2_t P,vec4_t A,vec4_t B,vec4_t C,txt2_t uvA,txt2_t u
     int texture_x = abs((int)(u * (texture_width -1)));
     int texture_y = abs((int)(v * (texture_height -1)));
 
+    // Adjust w so the closer the pixel is the smaller is the value of w
+    w = 1.0f - w;
+    int z_buffer_pos = (int) (window_width * P.y) + P.x;
+
     if((texture_width * texture_y) + texture_x > texture_width * texture_height) {
         return;
     } else if ((texture_width * texture_y) + texture_x < 0) {
         return;
-    } else {
+    } else if (w < z_buffer[z_buffer_pos]) {
+        z_buffer[z_buffer_pos] = w;
         uint32_t texel = texture[(texture_width * texture_y) + texture_x];
         draw_pixel(P.x, P.y, texel);
-    }
-    
+    }   
 }
