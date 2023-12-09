@@ -1,5 +1,6 @@
 #include <math.h>
 #include "matrix.h"
+#include "vector.h"
 
 mat4_t mat4_identity(void) {
     // | 1 0 0 0 |
@@ -127,5 +128,24 @@ vec4_t mat4_mul_vec4_project(mat4_t mat_proj, vec4_t v) {
         result.y /= result.w;
         result.z /= result.w;
     }
+    return result;
+}
+
+mat4_t mat4_point_at(vec3_t camera_position, vec3_t target, vec3_t up){
+    
+    vec3_t z = vec3_sub(target, camera_position);
+    vec3_normalize(&z);
+    vec3_t x = vec3_cross(up, z);
+    vec3_normalize(&x);
+    vec3_t y = vec3_cross(z, x);
+    vec3_normalize(&y);
+
+    mat4_t result = {{
+        {x.x, x.y, x.z, -vec3_dot(x, camera_position)},
+        {y.x, y.y, y.z, -vec3_dot(y, camera_position)},
+        {z.x, z.y, z.z, -vec3_dot(z, camera_position)},
+        {0, 0, 0, 1}
+    }};
+
     return result;
 }

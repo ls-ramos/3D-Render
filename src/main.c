@@ -11,6 +11,8 @@
 #include "triangle.h"
 #include "texture.h"
 #include "mesh.h"
+#include "camera.h"
+
 #ifndef  M_PI
 #define  M_PI  3.1415926535897932384626433
 #endif
@@ -27,9 +29,10 @@ int num_triangles_to_render = 0;
 ///////////////////////////////////////////////////////////////////////////////
 bool is_running = false;
 int previous_frame_time = 0;
+float delta_time = 0;
 
-vec3_t camera_position = { .x = 0, .y = 0, .z = 0 };
 mat4_t proj_matrix;
+mat4_t view_matrix;
 
 ///////////////////////////////////////////////////////////////////////////////
 // Setup function to initialize variables and game objects
@@ -113,14 +116,18 @@ void update(void) {
     if (time_to_wait > 0 && time_to_wait <= FRAME_TARGET_TIME) {
         SDL_Delay(time_to_wait);
     }
+    delta_time = (SDL_GetTicks() - previous_frame_time) / 1000.0f;
 
     previous_frame_time = SDL_GetTicks();
 
     // Change the mesh scale, rotation, and translation values per animation frame
-    mesh.rotation.x += 0.05;
-    // mesh.rotation.y += 0.05;
-    // mesh.rotation.z += 0.01;
+    // mesh.rotation.x += 0.5 * delta_time;
+    mesh.rotation.y += 0.5 * delta_time;
+    // mesh.rotation.z += 0.5 * delta_time;
     mesh.translation.z = 5.0;
+
+    // camera.position.y += 0.5 * delta_time;
+    // camera.position.x += 0.5 * delta_time;
 
     // Create scale, rotation, and translation matrices that will be used to multiply the mesh vertices
     mat4_t scale_matrix = mat4_make_scale(mesh.scale.x, mesh.scale.y, mesh.scale.z);
@@ -129,6 +136,11 @@ void update(void) {
     mat4_t rotation_matrix_y = mat4_make_rotation_y(mesh.rotation.y);
     mat4_t rotation_matrix_z = mat4_make_rotation_z(mesh.rotation.z);
 
+    vec3_t camera_target = { .x = 0, .y = 0, .z = mesh.translation.z };
+    vec3_t camera_up = { .x = 0, .y = 1, .z = 0 };
+
+    view_matrix = mat4_point_at(camera.position, camera_target, camera_up);
+    
     // Loop all triangle faces of our mesh
     int num_faces = array_length(mesh.faces);
     for (int i = 0; i < num_faces; i++) {
@@ -157,6 +169,7 @@ void update(void) {
 
             // Multiply the world matrix by the original vector
             transformed_vertex = mat4_mul_vec4(world_matrix, transformed_vertex);
+            transformed_vertex = mat4_mul_vec4(view_matrix, transformed_vertex);
 
             // Save transformed vertex in the array of transformed vertices
             transformed_vertices[j] = transformed_vertex;
@@ -189,7 +202,8 @@ void update(void) {
         // Backface culling test to see if the current face should be projected
         if (cull_method == CULL_BACKFACE) {
             // Find the vector between vertex A in the triangle and the camera origin
-            vec3_t camera_ray = vec3_sub(camera_position, vector_a);
+            vec3_t origin = { .x = 0, .y = 0, .z = 0}; // Camera is always at the origin in this case (Point at camera)
+            vec3_t camera_ray = vec3_sub(origin, vector_a);
 
             // Calculate how aligned the camera ray is with the face normal (using dot product)
             float dot_normal_camera = vec3_dot(normal, camera_ray);
