@@ -1,9 +1,10 @@
 #ifndef DISPLAY_H
 #define DISPLAY_H
 
+#include <SDL.h>
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdbool.h>
-#include <SDL2/SDL.h>
 #include "triangle.h"
 #include "texture.h"
 
