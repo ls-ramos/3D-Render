@@ -167,9 +167,7 @@ void process_input(void) {
         camera.position = vec3_add(camera.position, down);
     }
 
-    // TODO: Finish to change the camera target based on the mouse movement (keep mouse always in the center of the screen)
     SDL_GetMouseState(&mouse_x, &mouse_y);
-    printf("Mouse position: %d, %d\n", mouse_x, mouse_y);
 
     SDL_WarpMouseInWindow(window, window_width / 2, window_height / 2);
     float mouse_sensitivity = 0.001;
@@ -177,7 +175,6 @@ void process_input(void) {
     float pitch = mouse_sensitivity * (window_height / 2 - mouse_y);
 
     // camera.direction = vec3_rotate_x(camera.direction, -pitch); // TODO: Find out why this is creating weird rotations
-    // fix weird rotation when there is pitch angle
     camera.direction = vec3_rotate_y(camera.direction, -yaw);
     camera_right = vec3_cross(camera.direction, camera_up);
     vec3_normalize(&camera_right);
