@@ -64,44 +64,123 @@ void setup(void) {
 
     // Loads the vertex and face values for the mesh data structure
     // load_cube_mesh_data();
-    load_obj_file_data("./assets/drone.obj");
+    load_obj_file_data("./assets/efa.obj");
 
     // mesh_texture = (uint32_t *) REDBRICK_TEXTURE;
-    load_png_texture_data("./assets/drone.png");
-
+    load_png_texture_data("./assets/efa.png");
 }
+
+
+bool is_moving_forward = false;
+bool is_moving_back = false;
+bool is_moving_left = false;
+bool is_moving_right = false;
+bool is_moving_up = false;
+bool is_moving_down = false;
+
+int velocity = 2;
+
+vec3_t camera_right = { .x = 1, .y = 0, .z = 0 };
+vec3_t camera_up = { .x = 0, .y = 1, .z = 0 };
+
+
+int mouse_x = 0;
+int mouse_y = 0;
 
 ///////////////////////////////////////////////////////////////////////////////
 // Poll system events and handle keyboard input
 ///////////////////////////////////////////////////////////////////////////////
 void process_input(void) {
     SDL_Event event;
-    SDL_PollEvent(&event);
-    switch (event.type) {
-        case SDL_QUIT:
-            is_running = false;
-            break;
-        case SDL_KEYDOWN:
-            if (event.key.keysym.sym == SDLK_ESCAPE)
+    while(SDL_PollEvent(&event)){
+        switch (event.type) {
+            case SDL_QUIT:
                 is_running = false;
-            if (event.key.keysym.sym == SDLK_1)
-                render_method = RENDER_WIRE_VERTEX;
-            if (event.key.keysym.sym == SDLK_2)
-                render_method = RENDER_WIRE;
-            if (event.key.keysym.sym == SDLK_3)
-                render_method = RENDER_FILL_TRIANGLE;
-            if (event.key.keysym.sym == SDLK_4)
-                render_method = RENDER_FILL_TRIANGLE_WIRE;
-            if (event.key.keysym.sym == SDLK_5)
-                render_method = RENDER_TRIANGLE_TEXTURED;
-            if (event.key.keysym.sym == SDLK_6)
-                render_method = RENDER_TRIANGLE_TEXTURED_WIRE;
-            if (event.key.keysym.sym == SDLK_c)
-                cull_method = CULL_BACKFACE;
-            if (event.key.keysym.sym == SDLK_d)
-                cull_method = CULL_NONE;
-            break;
+                break;
+            case SDL_KEYDOWN:
+                if (event.key.keysym.sym == SDLK_ESCAPE)
+                    is_running = false;
+                if (event.key.keysym.sym == SDLK_1)
+                    render_method = RENDER_WIRE_VERTEX;
+                if (event.key.keysym.sym == SDLK_2)
+                    render_method = RENDER_WIRE;
+                if (event.key.keysym.sym == SDLK_3)
+                    render_method = RENDER_FILL_TRIANGLE;
+                if (event.key.keysym.sym == SDLK_4)
+                    render_method = RENDER_FILL_TRIANGLE_WIRE;
+                if (event.key.keysym.sym == SDLK_5)
+                    render_method = RENDER_TRIANGLE_TEXTURED;
+                if (event.key.keysym.sym == SDLK_6)
+                    render_method = RENDER_TRIANGLE_TEXTURED_WIRE;
+                if (event.key.keysym.sym == SDLK_c && cull_method == CULL_NONE)
+                    cull_method = CULL_BACKFACE;
+                if (event.key.keysym.sym == SDLK_c && cull_method == CULL_BACKFACE)
+                    cull_method = CULL_NONE;            
+                break;
+        }
+
+        switch (event.type) {
+            case SDL_QUIT:
+                is_running = false;
+                break;
+            case SDL_KEYUP:
+            case SDL_KEYDOWN:
+                if (event.key.keysym.sym == SDLK_w)
+                    is_moving_forward = event.type == SDL_KEYDOWN;
+                if (event.key.keysym.sym == SDLK_s)
+                    is_moving_back = event.type == SDL_KEYDOWN;
+                if (event.key.keysym.sym == SDLK_a)
+                    is_moving_left = event.type == SDL_KEYDOWN;
+                if (event.key.keysym.sym == SDLK_d)
+                    is_moving_right = event.type == SDL_KEYDOWN;
+                if (event.key.keysym.sym == SDLK_e)
+                    is_moving_up = event.type == SDL_KEYDOWN;
+                if (event.key.keysym.sym == SDLK_q)
+                    is_moving_down = event.type == SDL_KEYDOWN;  
+                break;
+        }
+        
     }
+
+    if(is_moving_forward) {
+        vec3_t forward = vec3_mul(camera.direction, velocity * delta_time);
+        camera.position = vec3_add(camera.position, forward);
+    }
+    if(is_moving_back) {
+        vec3_t backward = vec3_mul(camera.direction, -velocity * delta_time);
+        camera.position = vec3_add(camera.position, backward);
+    }
+    if(is_moving_left) {
+        vec3_t left = vec3_mul(camera_right, velocity * delta_time);
+        camera.position = vec3_add(camera.position, left);
+    }
+    if(is_moving_right) {
+        vec3_t right = vec3_mul(camera_right, -velocity * delta_time);
+        camera.position = vec3_add(camera.position, right);
+    }
+    if(is_moving_up) {
+        vec3_t up = vec3_mul(camera_up, velocity * delta_time);
+        camera.position = vec3_add(camera.position, up);
+    }
+    if(is_moving_down) {
+        vec3_t down = vec3_mul(camera_up, -velocity * delta_time);
+        camera.position = vec3_add(camera.position, down);
+    }
+
+    // TODO: Finish to change the camera target based on the mouse movement (keep mouse always in the center of the screen)
+    SDL_GetMouseState(&mouse_x, &mouse_y);
+    printf("Mouse position: %d, %d\n", mouse_x, mouse_y);
+
+    SDL_WarpMouseInWindow(window, window_width / 2, window_height / 2);
+    float mouse_sensitivity = 0.001;
+    float yaw = mouse_sensitivity * (window_width / 2 - mouse_x);
+    float pitch = mouse_sensitivity * (window_height / 2 - mouse_y);
+
+    // camera.direction = vec3_rotate_x(camera.direction, -pitch); // TODO: Find out why this is creating weird rotations
+    // fix weird rotation when there is pitch angle
+    camera.direction = vec3_rotate_y(camera.direction, -yaw);
+    camera_right = vec3_cross(camera.direction, camera_up);
+    vec3_normalize(&camera_right);
 }
 
 
@@ -122,7 +201,7 @@ void update(void) {
 
     // Change the mesh scale, rotation, and translation values per animation frame
     // mesh.rotation.x += 0.5 * delta_time;
-    mesh.rotation.y += 0.5 * delta_time;
+    // mesh.rotation.y += 0.5 * delta_time;
     // mesh.rotation.z += 0.5 * delta_time;
     mesh.translation.z = 5.0;
 
@@ -136,8 +215,9 @@ void update(void) {
     mat4_t rotation_matrix_y = mat4_make_rotation_y(mesh.rotation.y);
     mat4_t rotation_matrix_z = mat4_make_rotation_z(mesh.rotation.z);
 
-    vec3_t camera_target = { .x = 0, .y = 0, .z = mesh.translation.z };
-    vec3_t camera_up = { .x = 0, .y = 1, .z = 0 };
+    
+    vec3_t camera_target = vec3_add(camera.position, camera.direction);
+    // vec3_t camera_up = { .x = 0, .y = 1, .z = 0 };
 
     view_matrix = mat4_point_at(camera.position, camera_target, camera_up);
     

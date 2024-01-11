@@ -2,5 +2,5 @@
 
 camera_t camera = {
   .position = {0, 0, 0},
-  .rotation = {0, 0, 0}
+  .direction = {0, 0, 5.0}
 };
