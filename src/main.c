@@ -64,10 +64,10 @@ void setup(void) {
 
     // Loads the vertex and face values for the mesh data structure
     // load_cube_mesh_data();
-    load_obj_file_data("./assets/efa.obj");
+    load_obj_file_data("./assets/drone.obj");
 
     // mesh_texture = (uint32_t *) REDBRICK_TEXTURE;
-    load_png_texture_data("./assets/efa.png");
+    load_png_texture_data("./assets/drone.png");
 }
 
 
@@ -82,7 +82,7 @@ int velocity = 2;
 
 vec3_t camera_right = { .x = 1, .y = 0, .z = 0 };
 vec3_t camera_up = { .x = 0, .y = 1, .z = 0 };
-
+vec3_t camera_forward = { .x = 0, .y = 0, .z = 1 };
 
 int mouse_x = 0;
 int mouse_y = 0;
@@ -112,9 +112,11 @@ void process_input(void) {
                     render_method = RENDER_TRIANGLE_TEXTURED;
                 if (event.key.keysym.sym == SDLK_6)
                     render_method = RENDER_TRIANGLE_TEXTURED_WIRE;
-                if (event.key.keysym.sym == SDLK_c && cull_method == CULL_NONE)
+                if (cull_method == CULL_NONE && event.key.keysym.sym == SDLK_c){
                     cull_method = CULL_BACKFACE;
-                if (event.key.keysym.sym == SDLK_c && cull_method == CULL_BACKFACE)
+                    break;
+                }
+                if (cull_method == CULL_BACKFACE && event.key.keysym.sym == SDLK_c)
                     cull_method = CULL_NONE;            
                 break;
         }
@@ -143,27 +145,27 @@ void process_input(void) {
     }
 
     if(is_moving_forward) {
-        vec3_t forward = vec3_mul(camera.direction, velocity * delta_time);
+        vec3_t forward = vec3_mul(camera_forward, velocity * delta_time);
         camera.position = vec3_add(camera.position, forward);
     }
     if(is_moving_back) {
-        vec3_t backward = vec3_mul(camera.direction, -velocity * delta_time);
+        vec3_t backward = vec3_mul(camera_forward, -velocity * delta_time);
         camera.position = vec3_add(camera.position, backward);
     }
     if(is_moving_left) {
-        vec3_t left = vec3_mul(camera_right, velocity * delta_time);
+        vec3_t left = vec3_mul(camera_right, -velocity * delta_time);
         camera.position = vec3_add(camera.position, left);
     }
     if(is_moving_right) {
-        vec3_t right = vec3_mul(camera_right, -velocity * delta_time);
+        vec3_t right = vec3_mul(camera_right, velocity * delta_time);
         camera.position = vec3_add(camera.position, right);
     }
     if(is_moving_up) {
-        vec3_t up = vec3_mul(camera_up, velocity * delta_time);
+        vec3_t up = vec3_mul(camera_up, -velocity * delta_time);
         camera.position = vec3_add(camera.position, up);
     }
     if(is_moving_down) {
-        vec3_t down = vec3_mul(camera_up, -velocity * delta_time);
+        vec3_t down = vec3_mul(camera_up, velocity * delta_time);
         camera.position = vec3_add(camera.position, down);
     }
 
@@ -171,13 +173,8 @@ void process_input(void) {
 
     SDL_WarpMouseInWindow(window, window_width / 2, window_height / 2);
     float mouse_sensitivity = 0.001;
-    float yaw = mouse_sensitivity * (window_width / 2 - mouse_x);
-    float pitch = mouse_sensitivity * (window_height / 2 - mouse_y);
-
-    // camera.direction = vec3_rotate_x(camera.direction, -pitch); // TODO: Find out why this is creating weird rotations
-    camera.direction = vec3_rotate_y(camera.direction, -yaw);
-    camera_right = vec3_cross(camera.direction, camera_up);
-    vec3_normalize(&camera_right);
+    camera.yaw += mouse_sensitivity * (window_width / 2 - mouse_x);
+    camera.pitch += mouse_sensitivity * (window_height / 2 - mouse_y);
 }
 
 
@@ -213,8 +210,18 @@ void update(void) {
     mat4_t rotation_matrix_z = mat4_make_rotation_z(mesh.rotation.z);
 
     
-    vec3_t camera_target = vec3_add(camera.position, camera.direction);
-    // vec3_t camera_up = { .x = 0, .y = 1, .z = 0 };
+    mat4_t rotation_target_x = mat4_make_rotation_x(-camera.pitch);
+    mat4_t rotation_target_y = mat4_make_rotation_y(-camera.yaw);
+    mat4_t rotation_target = mat4_mul_mat4(rotation_target_y,rotation_target_x);
+    vec3_t camera_target = vec3_from_vec4(mat4_mul_vec4(rotation_target, vec4_from_vec3(camera.direction)));
+    
+    camera_right = vec3_cross(camera_up, camera_target);
+    vec3_normalize(&camera_right);
+
+    camera_forward = vec3_cross(camera_right, camera_up);
+    vec3_normalize(&camera_forward);
+
+    camera_target = vec3_add(camera.position, camera_target);
 
     view_matrix = mat4_point_at(camera.position, camera_target, camera_up);
     
