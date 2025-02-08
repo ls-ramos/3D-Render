@@ -78,7 +78,7 @@ bool is_moving_right = false;
 bool is_moving_up = false;
 bool is_moving_down = false;
 
-int velocity = 2;
+int velocity = 1;
 
 vec3_t camera_right = { .x = 1, .y = 0, .z = 0 };
 vec3_t camera_up = { .x = 0, .y = 1, .z = 0 };
@@ -173,8 +173,12 @@ void process_input(void) {
 
     SDL_WarpMouseInWindow(window, window_width / 2, window_height / 2);
     float mouse_sensitivity = 0.001;
-    camera.yaw += mouse_sensitivity * (window_width / 2 - mouse_x);
-    camera.pitch += mouse_sensitivity * (window_height / 2 - mouse_y);
+    if (mouse_x != 0) {
+        camera.yaw += mouse_sensitivity * (window_width / 2 - mouse_x);
+    }
+    if (mouse_y != 0) {
+        camera.pitch += mouse_sensitivity * (window_height / 2 - mouse_y);
+    }
 }
 
 
