@@ -12,6 +12,7 @@
 #include "texture.h"
 #include "mesh.h"
 #include "camera.h"
+#include "clipping.h"
 
 #ifndef  M_PI
 #define  M_PI  3.1415926535897932384626433
@@ -301,6 +302,17 @@ void update(void) {
                 continue;
             }
         }
+
+        polygon_t polygon = create_polygon_from_triangle(
+            vector_a,
+            vector_b,
+            vector_c
+        );
+
+        clip_polygon(&polygon);
+
+        // TODO: FINISH
+        // create_triangles_from_polygon(polygon);
 
         vec4_t projected_points[3];
 

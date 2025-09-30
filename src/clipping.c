@@ -70,7 +70,66 @@ polygon_t create_polygon_from_triangle(vec3_t v0, vec3_t v1, vec3_t v2) {
 }
 
 void clip_polygon_against_plane(polygon_t* polygon, int plane) {
-    // TODO:...
+    if (polygon->num_vertices <= 0) return;
+
+    plane_t clipping_plane = frustum_planes[plane];
+
+    vec3_t new_vertices[MAX_NUM_POLY_VERTICES];
+    int new_num_vertices = 0;
+
+    vec3_t* vertices = polygon->vertices;
+    int num_vertices = polygon->num_vertices;
+
+    vec3_t prev_vertex = vertices[num_vertices - 1];
+    float prev_distance = vec3_dot(
+        vec3_sub(prev_vertex, clipping_plane.point),
+        clipping_plane.normal
+    );
+    int prev_inside = (prev_distance >= 0);
+
+    for (int i = 0; i < num_vertices; i++) {
+        vec3_t curr_vertex = vertices[i];
+        float curr_distance = vec3_dot(
+            vec3_sub(curr_vertex, clipping_plane.point),
+            clipping_plane.normal
+        );
+        int curr_inside = (curr_distance >= 0);
+
+        if (prev_inside && curr_inside) {
+            if (new_num_vertices < MAX_NUM_POLY_VERTICES) {
+                new_vertices[new_num_vertices++] = curr_vertex;
+            }
+        } else if (prev_inside && !curr_inside) {
+            // Edge goes from inside to outside: add intersection only
+            float t = prev_distance / (prev_distance - curr_distance);
+            vec3_t direction = vec3_sub(curr_vertex, prev_vertex);
+            vec3_t intersection = vec3_add(prev_vertex, vec3_mul(direction, t));
+            if (new_num_vertices < MAX_NUM_POLY_VERTICES) {
+                new_vertices[new_num_vertices++] = intersection;
+            }
+        } else if (!prev_inside && curr_inside) {
+            // Edge goes from outside to inside: add intersection and current
+            float t = prev_distance / (prev_distance - curr_distance);
+            vec3_t direction = vec3_sub(curr_vertex, prev_vertex);
+            vec3_t intersection = vec3_add(prev_vertex, vec3_mul(direction, t));
+            if (new_num_vertices < MAX_NUM_POLY_VERTICES) {
+                new_vertices[new_num_vertices++] = intersection;
+            }
+            if (new_num_vertices < MAX_NUM_POLY_VERTICES) {
+                new_vertices[new_num_vertices++] = curr_vertex;
+            }
+        }
+
+        prev_vertex = curr_vertex;
+        prev_distance = curr_distance;
+        prev_inside = curr_inside;
+    }
+
+    // Write back the results
+    polygon->num_vertices = new_num_vertices;
+    for (int i = 0; i < new_num_vertices; i++) {
+        polygon->vertices[i] = new_vertices[i];
+    }
 }
 
 void clip_polygon(polygon_t* polygon) {
