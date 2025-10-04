@@ -4,6 +4,20 @@
 
 https://github.com/user-attachments/assets/cce774f1-bcae-482b-b33a-2b18a0ef7d05
 
+## Dependencies
+
+## SDL2
+
+This project depends on SDL2
+
+### Install on MacOS
+
+`brew install sdl2`
+
+### Install on Linux
+
+TODO: Add command here
+
 ## How to run
 
 1. `make build` or `make build-mac` when on macbook (tested on macbook m1)
