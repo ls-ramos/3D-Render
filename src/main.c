@@ -63,12 +63,14 @@ void setup(void) {
     float zfar = 100.0;
     proj_matrix = mat4_make_perspective(fov, aspect, znear, zfar);
 
+    init_frustum_planes(fov, znear, zfar);
+
     // Loads the vertex and face values for the mesh data structure
     // load_cube_mesh_data();
-    load_obj_file_data("./assets/drone.obj");
+    load_obj_file_data("./assets/cube.obj");
 
     // mesh_texture = (uint32_t *) REDBRICK_TEXTURE;
-    load_png_texture_data("./assets/drone.png");
+    load_png_texture_data("./assets/cube.png");
 }
 
 
@@ -175,10 +177,10 @@ void process_input(void) {
     SDL_WarpMouseInWindow(window, window_width / 2, window_height / 2);
     float mouse_sensitivity = 0.001;
     if (mouse_x != 0) {
-        camera.yaw += mouse_sensitivity * (window_width / 2 - mouse_x);
+        camera.yaw += mouse_sensitivity * ((float) window_width / 2 - mouse_x);
     }
     if (mouse_y != 0) {
-        camera.pitch += mouse_sensitivity * (window_height / 2 - mouse_y);
+        camera.pitch += mouse_sensitivity * ((float) window_height / 2 - mouse_y);
     }
 }
 
@@ -309,50 +311,55 @@ void update(void) {
             vector_c
         );
 
+
         clip_polygon(&polygon);
 
-        // TODO: FINISH
-        // create_triangles_from_polygon(polygon);
+        int num_triangles = polygon.num_vertices - 2;
+        triangle_t triangles[num_triangles];
+        create_triangles_from_polygon(polygon, triangles);
 
-        vec4_t projected_points[3];
+        for(int n_triangle = 0; n_triangle < num_triangles; n_triangle++){
 
-        // Loop all three vertices to perform projection
-        for (int j = 0; j < 3; j++) {
-            // Project the current vertex
-            projected_points[j] = mat4_mul_vec4_project(proj_matrix, transformed_vertices[j]);
+            vec4_t projected_points[3];
 
-            // Scale into the view
-            projected_points[j].x *= (window_width / 2.0);
-            projected_points[j].y *= (window_height / 2.0);
+            // Loop all three vertices to perform projection
+            for (int j = 0; j < 3; j++) {
+                // Project the current vertex
+                projected_points[j] = mat4_mul_vec4_project(proj_matrix, triangles[n_triangle].points[j]);
 
-            // Flip y value to account for inverted y in screen coordinates (in screen y grows downwards)
-            projected_points[j].y *= -1;
+                // Scale into the view
+                projected_points[j].x *= (window_width / 2.0);
+                projected_points[j].y *= (window_height / 2.0);
 
-            // Translate the projected points to the middle of the screen
-            projected_points[j].x += (window_width / 2.0);
-            projected_points[j].y += (window_height / 2.0);
-        }
+                // Flip y value to account for inverted y in screen coordinates (in screen y grows downwards)
+                projected_points[j].y *= -1;
 
-        triangle_t projected_triangle = {
-            .points = {
-                { projected_points[0].x, projected_points[0].y, projected_points[0].z, projected_points[0].w },
-                { projected_points[1].x, projected_points[1].y, projected_points[1].z, projected_points[1].w },
-                { projected_points[2].x, projected_points[2].y, projected_points[2].z, projected_points[2].w }
-            },
-            .texcoords = {
-                { mesh_face.a_uv.u, mesh_face.a_uv.v },
-                { mesh_face.b_uv.u, mesh_face.b_uv.v },
-                { mesh_face.c_uv.u, mesh_face.c_uv.v },
-            },
-            .color = mesh_face.color,
-        };
+                // Translate the projected points to the middle of the screen
+                projected_points[j].x += (window_width / 2.0);
+                projected_points[j].y += (window_height / 2.0);
+            }
 
-        if((int)projected_points[0].y == (int)projected_points[1].y && (int)projected_points[0].y == (int)projected_points[2].y) {
-            continue;
-        }
-        
-        if(num_triangles_to_render < MAX_TRIANGLES_PER_MESH) {
-            triangles_to_render[num_triangles_to_render++] = projected_triangle;
+            triangle_t projected_triangle = {
+                .points = {
+                    { projected_points[0].x, projected_points[0].y, projected_points[0].z, projected_points[0].w },
+                    { projected_points[1].x, projected_points[1].y, projected_points[1].z, projected_points[1].w },
+                    { projected_points[2].x, projected_points[2].y, projected_points[2].z, projected_points[2].w }
+                },
+                .texcoords = {
+                    { mesh_face.a_uv.u, mesh_face.a_uv.v },
+                    { mesh_face.b_uv.u, mesh_face.b_uv.v },
+                    { mesh_face.c_uv.u, mesh_face.c_uv.v },
+                },
+                .color = mesh_face.color,
+            };
+
+            if((int)projected_points[0].y == (int)projected_points[1].y && (int)projected_points[0].y == (int)projected_points[2].y) {
+                continue;
+            }
+            
+            if(num_triangles_to_render < MAX_TRIANGLES_PER_MESH) {
+                triangles_to_render[num_triangles_to_render++] = projected_triangle;
+            }
         }
     }
 }

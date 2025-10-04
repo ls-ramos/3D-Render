@@ -18,6 +18,17 @@ This project depends on SDL2
 
 TODO: Add command here
 
+## Clangd config (VSCode extension for intelisense for c/c++)
+
+### MacOs
+
+```
+CompileFlags:
+  Add:
+    - -I/opt/homebrew/include
+    - -I/opt/homebrew/include/SDL2
+```
+
 ## How to run
 
 1. `make build` or `make build-mac` when on macbook (tested on macbook m1)

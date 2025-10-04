@@ -1,5 +1,6 @@
 #include <math.h>
 #include "clipping.h"
+#include "vector.h"
 
 #define NUM_PLANES 6
 plane_t frustum_planes[NUM_PLANES];
@@ -68,6 +69,14 @@ polygon_t create_polygon_from_triangle(vec3_t v0, vec3_t v1, vec3_t v2) {
     };
     return polygon;
 }
+
+void create_triangles_from_polygon(polygon_t polygon, triangle_t* triangles) {
+    for (int i = 0; i < polygon.num_vertices - 2; i++) {
+        triangles[i].points[0] = vec4_from_vec3(polygon.vertices[i]);
+        triangles[i].points[1] = vec4_from_vec3(polygon.vertices[i+1]);
+        triangles[i].points[2] = vec4_from_vec3(polygon.vertices[i+2]);
+    }
+};
 
 void clip_polygon_against_plane(polygon_t* polygon, int plane) {
     if (polygon->num_vertices <= 0) return;

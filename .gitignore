@@ -2,3 +2,5 @@
 
 renderer
 .DS_Store
+
+.clangd
