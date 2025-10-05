@@ -72,7 +72,7 @@ polygon_t create_polygon_from_triangle(vec3_t v0, vec3_t v1, vec3_t v2) {
 
 void create_triangles_from_polygon(polygon_t polygon, triangle_t* triangles) {
     for (int i = 0; i < polygon.num_vertices - 2; i++) {
-        triangles[i].points[0] = vec4_from_vec3(polygon.vertices[i]);
+        triangles[i].points[0] = vec4_from_vec3(polygon.vertices[0]);
         triangles[i].points[1] = vec4_from_vec3(polygon.vertices[i+1]);
         triangles[i].points[2] = vec4_from_vec3(polygon.vertices[i+2]);
     }
