@@ -17,11 +17,12 @@ bool initialize_window(void) {
         return false;
     }
 
-    // Set width and height of the SDL window with the max screen resolution
-    SDL_DisplayMode display_mode;
-    SDL_GetCurrentDisplayMode(0, &display_mode);
-    window_width = display_mode.w;
-    window_height = display_mode.h;
+    // Set width and height of the SDL window with the usable screen resolution
+    // This accounts for macOS menu bar and other system UI elements
+    SDL_Rect usable_bounds;
+    SDL_GetDisplayUsableBounds(0, &usable_bounds);
+    window_width = usable_bounds.w;
+    window_height = usable_bounds.h;
 
     // Create a SDL Window
     window = SDL_CreateWindow(
